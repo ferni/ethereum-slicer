@@ -30,11 +30,11 @@ contract Slicer {
 
     modifier checkInvariants() {
         _;
-        uint totalWeiDistributed = 0;
+        uint amountHeld = 0;
         for (var i = 0; i < numberOfSlices; i++) {
-            totalWeiDistributed += slices[beneficiaries[i]].balance;
+            amountHeld += slices[beneficiaries[i]].balance;
         }
-        if (totalWeiDistributed != this.balance) {
+        if (amountHeld != this.balance) {
             throw;
         }
     }
