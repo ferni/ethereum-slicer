@@ -6,11 +6,10 @@ contract Slicer {
         uint256 balance;
     }
     mapping(address => Slice) public slices;
-    address[] public beneficiaries;
-    uint firstBeneficiary = 0;
+    address[] public recepients;
     uint numberOfSlices;
-    function Slicer(address[] _beneficiaries, uint[] _percentages) {
-        numberOfSlices = _beneficiaries.length;
+    function Slicer(address[] _recepients, uint[] _percentages) {
+        numberOfSlices = _recepients.length;
         if (numberOfSlices > 10 || numberOfSlices == 0) {
             throw;
         }
@@ -19,20 +18,20 @@ contract Slicer {
         }
         uint totalPercentage = 0;
         for (var i = 0; i < numberOfSlices; i++) {
-            slices[_beneficiaries[i]] = Slice(_percentages[i] / 100, 0);
+            slices[_recepients[i]] = Slice(_percentages[i] / 100, 0);
             totalPercentage += _percentages[i];
         }
         if (totalPercentage != 100) {
             throw;
         }
-        beneficiaries = _beneficiaries;
+        recepients = _recepients;
     }
 
     modifier checkInvariants() {
         _;
         uint amountHeld = 0;
         for (var i = 0; i < numberOfSlices; i++) {
-            amountHeld += slices[beneficiaries[i]].balance;
+            amountHeld += slices[recepients[i]].balance;
         }
         if (amountHeld != this.balance) {
             throw;
@@ -40,27 +39,15 @@ contract Slicer {
     }
 
     function() payable checkInvariants {
-        var index = firstBeneficiary;
         uint256 amountLeft = msg.value;
-
         //distribute to all minus one
-        for (var given = 0; given < numberOfSlices - 1; given++) {
-            var slice = slices[beneficiaries[index]];
+        for (var i = 0; i < numberOfSlices - 1; i++) {
+            var slice = slices[recepients[i]];
             uint256 toGive = msg.value * slice.percentage;
             slice.balance += toGive;
             amountLeft -= toGive;
-            index++;
-            if (index > numberOfSlices - 1) {
-                index = 0;
-            }
         }
         //the last one takes the rest
-        slices[beneficiaries[index]].balance += amountLeft;
-
-        //rotate beneficiaries so rounding errors matter less
-        firstBeneficiary++;
-        if (firstBeneficiary > numberOfSlices - 1) {
-            firstBeneficiary = 0;
-        }
+        slices[recepients[i]].balance += amountLeft;
     }
 }
