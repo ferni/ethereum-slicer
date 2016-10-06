@@ -23,6 +23,9 @@ contract Slicer {
             if (slices[_recipients[i]].exists) {
                 throw; //no repeated addresses
             }
+            if (_percentages[i] == 0) {
+                throw;
+            }
             slices[_recipients[i]] = Slice(_percentages[i] / 100, 0, true);
             totalPercentage += _percentages[i];
         }
