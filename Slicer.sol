@@ -10,6 +10,8 @@ contract Slicer {
     }
     mapping(address => Slice) public slices;
     address[] public recipients;
+    uint256 unaccountedTolerance;//on each distribution a small amount might be left behind due to rounding
+
     function Slicer(address[] _recipients, uint[] _percentages) {
         //10 recipients max to avoid running out of gas
         if (_recipients.length > 10 || _recipients.length < 2) {
@@ -26,18 +28,19 @@ contract Slicer {
             if (_percentages[i] == 0 || _percentages[i] > 100) {
                 throw;
             }
-            slices[_recipients[i]] = Slice(_percentages[i] / 100, 0, true);
+            slices[_recipients[i]] = Slice(_percentages[i], 0, true);
             totalPercentage += _percentages[i];
         }
         if (totalPercentage != 100) {
             throw;
         }
+        unaccountedTolerance = _recipients.length * 100;
         recipients = _recipients;
     }
 
     modifier checkInvariants() {
         _;
-        if (getTotalHeld() != this.balance) {
+        if (getTotalHeld() > this.balance) {
             throw;
         }
     }
@@ -51,23 +54,18 @@ contract Slicer {
     }
 
     modifier thereAreUnaccountedFunds() {
-        if (this.balance > getTotalHeld()) {
+        uint256 totalHeld = getTotalHeld();
+        if (this.balance > totalHeld && this.balance - totalHeld > unaccountedTolerance) {
             _;
         }
     }
 
     function distributeUnaccountedFunds() private thereAreUnaccountedFunds {
         uint256 amount = this.balance - getTotalHeld();
-        uint256 amountLeft = amount;
-        //distribute to all minus one
-        for (var i = 0; i < recipients.length - 1; i++) {
+        for (var i = 0; i < recipients.length; i++) {
             var slice = slices[recipients[i]];
-            uint256 toGive = amount * slice.percentage;
-            slice.balance += toGive;
-            amountLeft -= toGive;
+            slice.balance += (amount * slice.percentage) / 100;
         }
-        //the last one takes the rest
-        slices[recipients[i]].balance += amountLeft;
     }
 
     function() payable {}
