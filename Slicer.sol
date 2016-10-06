@@ -4,10 +4,12 @@ contract Slicer {
     struct Slice {
         uint percentage;
         uint256 balance;
+        bool exists;
     }
     mapping(address => Slice) public slices;
     address[] public recipients;
     uint numberOfSlices;
+    
     function Slicer(address[] _recipients, uint[] _percentages) {
         numberOfSlices = _recipients.length;
         if (numberOfSlices > 10 || numberOfSlices == 0) {
@@ -38,6 +40,14 @@ contract Slicer {
         }
     }
 
+    modifier onlyRecipients() {
+        if(slices[msg.sender].exists) {
+            _;
+        } else {
+            throw;
+        }
+    }
+
     function() payable checkInvariants {
         uint256 amountLeft = msg.value;
         //distribute to all minus one
@@ -49,5 +59,13 @@ contract Slicer {
         }
         //the last one takes the rest
         slices[recipients[i]].balance += amountLeft;
+    }
+
+    function withdraw() onlyRecipients {
+        uint256 amount = slices[msg.sender].balance;
+        slices[msg.sender].balance = 0;
+        if(!msg.sender.send(amount)) {
+            throw;
+        }
     }
 }
