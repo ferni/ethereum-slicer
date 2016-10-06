@@ -12,7 +12,7 @@ contract Slicer {
     address[] public recipients;
     function Slicer(address[] _recipients, uint[] _percentages) {
         //10 recipients max to avoid running out of gas
-        if (_recipients.length > 10 || _recipients.length == 0) {
+        if (_recipients.length > 10 || _recipients.length < 2) {
             throw;
         }
         if (_recipients.length != _percentages.length) {
@@ -23,7 +23,7 @@ contract Slicer {
             if (slices[_recipients[i]].exists) {
                 throw; //no repeated addresses
             }
-            if (_percentages[i] == 0) {
+            if (_percentages[i] == 0 || _percentages[i] > 100) {
                 throw;
             }
             slices[_recipients[i]] = Slice(_percentages[i] / 100, 0, true);
