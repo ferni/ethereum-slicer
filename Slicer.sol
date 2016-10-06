@@ -58,7 +58,7 @@ contract Slicer {
         slices[recipients[i]].balance += amountLeft;
     }
 
-    function withdraw() onlyRecipients {
+    function withdraw() onlyRecipients checkInvariants {
         uint256 amount = slices[msg.sender].balance;
         slices[msg.sender].balance = 0;
         if(!msg.sender.send(amount)) {
