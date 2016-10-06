@@ -8,18 +8,15 @@ contract Slicer {
     }
     mapping(address => Slice) public slices;
     address[] public recipients;
-    uint numberOfSlices;
-    
     function Slicer(address[] _recipients, uint[] _percentages) {
-        numberOfSlices = _recipients.length;
-        if (numberOfSlices > 10 || numberOfSlices == 0) {
+        if (_recipients.length > 10 || _recipients.length == 0) {
             throw;
         }
-        if (numberOfSlices != _percentages.length) {
+        if (_recipients.length != _percentages.length) {
             throw;
         }
         uint totalPercentage = 0;
-        for (var i = 0; i < numberOfSlices; i++) {
+        for (var i = 0; i < _recipients.length; i++) {
             slices[_recipients[i]] = Slice(_percentages[i] / 100, 0, true);
             totalPercentage += _percentages[i];
         }
@@ -32,7 +29,7 @@ contract Slicer {
     modifier checkInvariants() {
         _;
         uint256 amountHeld = 0;
-        for (var i = 0; i < numberOfSlices; i++) {
+        for (var i = 0; i < recipients.length; i++) {
             amountHeld += slices[recipients[i]].balance;
         }
         if (amountHeld != this.balance) {
@@ -51,7 +48,7 @@ contract Slicer {
     function() payable checkInvariants {
         uint256 amountLeft = msg.value;
         //distribute to all minus one
-        for (var i = 0; i < numberOfSlices - 1; i++) {
+        for (var i = 0; i < recipients.length - 1; i++) {
             var slice = slices[recipients[i]];
             uint256 toGive = msg.value * slice.percentage;
             slice.balance += toGive;
