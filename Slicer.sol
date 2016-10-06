@@ -1,5 +1,7 @@
 pragma solidity ^0.4.2;
 
+//Distributes funds according to a pre-established percentage.
+//WARNING: This contract is not finished, don't use it!
 contract Slicer {
     struct Slice {
         uint percentage;
