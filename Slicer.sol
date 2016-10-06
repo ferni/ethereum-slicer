@@ -29,11 +29,7 @@ contract Slicer {
 
     modifier checkInvariants() {
         _;
-        uint256 amountHeld = 0;
-        for (var i = 0; i < recipients.length; i++) {
-            amountHeld += slices[recipients[i]].balance;
-        }
-        if (amountHeld != this.balance) {
+        if (getTotalHeld() != this.balance) {
             throw;
         }
     }
@@ -46,12 +42,18 @@ contract Slicer {
         }
     }
 
+    modifier thereAreUnaccountedFunds() {
+        if (this.balance > getTotalHeld()) {
+            _;
+        }
+    }
+
     function distributeFunds(uint256 amount) private {
         uint256 amountLeft = msg.value;
         //distribute to all minus one
         for (var i = 0; i < recipients.length - 1; i++) {
             var slice = slices[recipients[i]];
-            uint256 toGive = msg.value * slice.percentage;
+            uint256 toGive = amount * slice.percentage;
             slice.balance += toGive;
             amountLeft -= toGive;
         }
@@ -60,7 +62,7 @@ contract Slicer {
     }
 
     function() payable checkInvariants {
-
+        distributeFunds(msg.value);
     }
 
     function withdraw() onlyRecipients {
@@ -79,11 +81,7 @@ contract Slicer {
         return totalHeld;
     }
 
-    function distributeUnaccountedBalance() {
-
-    }
-
-    function changeAddress() onlyRecipients {
-
+    function distributeUnaccountedFunds() thereAreUnaccountedFunds {
+        distributeFunds(this.balance - getTotalHeld());
     }
 }
