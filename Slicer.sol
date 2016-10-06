@@ -34,8 +34,8 @@ contract Slicer {
         }
     }
 
-    modifier onlyRecipients() {
-        if(slices[msg.sender].exists) {
+    modifier isRecipient(address entity) {
+        if(slices[entity].exists) {
             _;
         } else {
             throw;
@@ -48,8 +48,9 @@ contract Slicer {
         }
     }
 
-    function distributeFunds(uint256 amount) private {
-        uint256 amountLeft = msg.value;
+    function distributeUnaccountedFunds() private thereAreUnaccountedFunds {
+        uint256 amount = this.balance - getTotalHeld();
+        uint256 amountLeft = amount;
         //distribute to all minus one
         for (var i = 0; i < recipients.length - 1; i++) {
             var slice = slices[recipients[i]];
@@ -61,12 +62,11 @@ contract Slicer {
         slices[recipients[i]].balance += amountLeft;
     }
 
-    function() payable checkInvariants {
-        distributeFunds(msg.value);
-    }
+    function() payable {}
 
-    function withdraw() onlyRecipients {
-        uint256 amount = slices[msg.sender].balance;
+    function withdrawFor(address entity) isRecipient(entity) checkInvariants {
+        distributeUnaccountedFunds();
+        uint256 amount = slices[entity].balance;
         slices[msg.sender].balance = 0;
         if(!msg.sender.send(amount)) {
             throw;
@@ -79,9 +79,5 @@ contract Slicer {
             totalHeld += slices[recipients[i]].balance;
         }
         return totalHeld;
-    }
-
-    function distributeUnaccountedFunds() thereAreUnaccountedFunds {
-        distributeFunds(this.balance - getTotalHeld());
     }
 }
