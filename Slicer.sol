@@ -20,6 +20,9 @@ contract Slicer {
         }
         uint totalPercentage = 0;
         for (var i = 0; i < _recipients.length; i++) {
+            if (slices[_recipients[i]].exists) {
+                throw; //no repeated addresses
+            }
             slices[_recipients[i]] = Slice(_percentages[i] / 100, 0, true);
             totalPercentage += _percentages[i];
         }
